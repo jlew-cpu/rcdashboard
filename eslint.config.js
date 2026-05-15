@@ -6,8 +6,17 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
   globalIgnores(['dist']),
+  // Server files — Node.js environment
   {
-    files: ['**/*.{js,jsx}'],
+    files: ['server/**/*.js'],
+    extends: [js.configs.recommended],
+    languageOptions: {
+      globals: globals.node,
+    },
+  },
+  // Frontend / shared files — browser environment
+  {
+    files: ['src/**/*.{js,jsx}', '*.{js,jsx}'],
     extends: [
       js.configs.recommended,
       reactHooks.configs.flat.recommended,
