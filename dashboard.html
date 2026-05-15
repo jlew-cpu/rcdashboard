@@ -10,240 +10,222 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; background: #FAF9F5; font-family: 'Inter', -apple-system, sans-serif; -webkit-font-smoothing: antialiased; }
-  #root { min-height: 100vh; }
-  button { font-family: inherit; }
-  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: #F5F3EE; } ::-webkit-scrollbar-thumb { background: #D0CEC5; border-radius: 3px; }
+  *,*::before,*::after{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:#FAF9F5;font-family:'Inter',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;color:#141413}
+  #root{min-height:100vh}
+  button,a{font-family:inherit}
 </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
 
-// ── Design tokens ──────────────────────────────────────────────────────────
-const T = {
-  ivory: '#FAF9F5', surface: '#FFFFFF', surfaceAlt: '#F5F3EE',
-  warnBg: '#FEF3EE', warnBgLight: '#FDF6F2',
-  slate: '#141413', muted: '#6B6A68', mutedLight: '#A09E9B',
-  clay: '#D97757', clayLight: '#EEB49E', red: '#B84030', redBg: '#FDEEEB',
-  olive: '#5C6B3A', oliveLight: '#8C9E6A', oliveBg: '#EEF2E8',
-  sky: '#3D7CC9', skyBg: '#EBF2FA',
-  fig: '#5B4B7A', figBg: '#F0ECF7',
-  heather: '#7B5EA7', heatherBg: '#F5EFF9',
-  border: '#E5E3DC', borderMed: '#D0CEC5',
+// ── Tokens ─────────────────────────────────────────────────────────────────
+const C = {
+  ivory:      '#FAF9F5',
+  surface:    '#FFFFFF',
+  alt:        '#F5F3EE',
+  slate:      '#141413',
+  muted:      '#6B6A68',
+  faint:      '#A09E9B',
+  border:     '#E5E3DC',
+  borderMed:  '#D0CEC5',
+  clay:       '#D97757',
+  clayLight:  '#EEB49E',
+  clayBg:     '#FEF3EE',
+  clayBgSoft: '#FDF6F2',
+  red:        '#B84030',
+  olive:      '#5C6B3A',
+  oliveLight: '#8C9E6A',
+  oliveBg:    '#EEF2E8',
+  sky:        '#3D7CC9',
+  skyBg:      '#EBF2FA',
+  fig:        '#5B4B7A',
+  figBg:      '#F0ECF7',
+  heather:    '#7B5EA7',
+  heatherBg:  '#F5EFF9',
 };
 
-const KIND_COLORS = { HM: T.sky, TS: T.olive, CD: T.clay, SD: T.fig, CL: T.heather, DB: T.slate };
-const KIND_BG     = { HM: T.skyBg, TS: T.oliveBg, CD: T.warnBg, SD: T.figBg, CL: T.heatherBg, DB: '#EEEEED' };
-const KIND_LABEL  = { HM: 'HM screen', TS: 'Tech screen', CD: 'Coding', SD: 'Sys design', CL: 'Culture', DB: 'Debrief' };
+const KIND_COLOR = { HM: C.sky,     TS: C.olive,   CD: C.clay,     SD: C.fig,    CL: C.heather, DB: C.slate };
+const KIND_BG    = { HM: C.skyBg,   TS: C.oliveBg, CD: C.clayBg,   SD: C.figBg,  CL: C.heatherBg, DB: '#EEEEED' };
+const KIND_NAME  = { HM: 'HM screen', TS: 'Tech screen', CD: 'Coding', SD: 'Sys design', CL: 'Culture', DB: 'Debrief' };
 
-// ── Sample data ────────────────────────────────────────────────────────────
-const TODAY_LABEL = 'Wed · May 15, 2026';
-
+// ── Data ───────────────────────────────────────────────────────────────────
 const TOOLS = [
-  { name: 'Greenhouse', short: 'GH',  kind: 'olive',   url: 'https://app.greenhouse.io' },
-  { name: 'ModernLoop', short: 'ML',  kind: 'clay',    url: 'https://app.modernloop.io' },
-  { name: 'Gcal',       short: 'Cal', kind: 'sky',     url: 'https://calendar.google.com' },
-  { name: 'Inbox',      short: '@',   kind: 'fig',     url: 'https://mail.google.com' },
-  { name: 'Slack',      short: '#',   kind: 'heather', url: 'https://slack.com' },
+  { name:'Greenhouse', short:'GH',  color:C.olive,   bg:C.oliveBg,   border:C.oliveLight, url:'https://app.greenhouse.io' },
+  { name:'ModernLoop', short:'ML',  color:C.clay,    bg:C.clayBg,    border:C.clayLight,  url:'https://app.modernloop.io' },
+  { name:'Gcal',       short:'Cal', color:C.sky,     bg:C.skyBg,     border:C.sky,        url:'https://calendar.google.com' },
+  { name:'Inbox',      short:'@',   color:C.fig,     bg:C.figBg,     border:C.fig,        url:'https://mail.google.com' },
+  { name:'Slack',      short:'#',   color:C.heather, bg:C.heatherBg, border:C.heather,    url:'https://slack.com' },
 ];
 
 const KPIS = [
-  { label: 'Open roles',         value: '23', note: 'across 5 functions', warn: false },
-  { label: 'Scheduled · week',   value: '28', note: 'vs. Sam: 24',        warn: false },
-  { label: 'Queue (mine)',        value: '14', note: '3 over 24h',         warn: true  },
-  { label: 'Debrief mismatches', value: '3',  note: 'needs fix',          warn: true  },
-  { label: 'Decline offenders',  value: '3',  note: '>25% rate',          warn: true  },
+  { label:'Open roles',         value:'23', note:'across 5 functions', warn:false },
+  { label:'Scheduled · week',   value:'28', note:'vs. Sam: 24',        warn:false },
+  { label:'Queue (mine)',        value:'14', note:'3 over 24h',         warn:true  },
+  { label:'Debrief mismatches', value:'3',  note:'needs fix',          warn:true  },
+  { label:'Decline offenders',  value:'3',  note:'>25% rate',          warn:true  },
 ];
 
-const DAILY_FEED = {
-  slack: [
-    { time: '8:42a',  from: 'Priya N',  type: 'DM',                text: 'swamped this week — can I drop the Fri coding?', urgent: true,  decline: false },
-    { time: '9:15a',  from: 'Maya C',   type: '#rc-coord',          text: 're-slot R. Okafor onsite needed',                urgent: false, decline: false },
-    { time: '10:02a', from: 'Eva K',    type: 'DM',                text: 'OOO Fri afternoon — sorry',                       urgent: true,  decline: false },
-    { time: '11:30a', from: 'Devon P',  type: '#role-pretraining',  text: 'HM wants Eva on debrief panel',                  urgent: false, decline: false },
-    { time: '1:20p',  from: 'Marcus W', type: 'DM',                text: 'declining the 3pm — too short notice',            urgent: true,  decline: true  },
-  ],
-  gcal: [
-    { time: '7:55a',    who: 'Theo R',         text: 'declined Tue 2pm panel · sent at 7:55a',   urgent: true,  decline: true,  afterHours: false },
-    { time: '9:00a',    who: 'L. Park onsite', text: 'block missing 1 interviewer (Eva K)',       urgent: true,  decline: false, afterHours: false },
-    { time: '10:30a',   who: 'J. Alvarez TPM', text: 'Devon P accepted',                          urgent: false, decline: false, afterHours: false },
-    { time: '2:15p',    who: 'Lin Y',          text: 'declined Fri 11am — calendar conflict',     urgent: true,  decline: true,  afterHours: false },
-    { time: 'after 6p', who: 'Marcus W',       text: 'declined invite (after hours)',             urgent: true,  decline: true,  afterHours: true  },
-  ],
-  ml: [
-    { time: 'live',   who: 'REQ-2041',          text: 'Sr ML panel · needs 5 interviewers · 1h old', urgent: true,  tab: 'my tasks' },
-    { time: 'live',   who: 'REQ-2035',          text: 'Staff iOS · no candidate response · 2d',       urgent: true,  tab: 'my tasks' },
-    { time: '9:30a',  who: 'REQ-2039',          text: 'PD phone · new request from Devon P',           urgent: false, tab: 'my tasks' },
-    { time: '11:45a', who: 'REQ-2042',          text: 'RE Alignment · debrief mismatch with Gcal',     urgent: true,  tab: 'alerts'   },
-    { time: '1:00p',  who: 'Module · TS Front', text: 'low coverage flag (3 trained)',                 urgent: false, tab: 'modules'  },
-  ],
+const FEED = {
+  slack: {
+    color:C.heather, bg:C.heatherBg, border:'#C4A8E0',
+    short:'#', label:'Slack', sub:'DMs · channels · pings',
+    items:[
+      { time:'8:42a',  from:'Priya N',  ctx:'DM',                 text:'swamped this week — can I drop the Fri coding?', urgent:true,  decline:false },
+      { time:'9:15a',  from:'Maya C',   ctx:'#rc-coord',           text:'re-slot R. Okafor onsite needed',                urgent:false, decline:false },
+      { time:'10:02a', from:'Eva K',    ctx:'DM',                 text:'OOO Fri afternoon — sorry',                       urgent:true,  decline:false },
+      { time:'11:30a', from:'Devon P',  ctx:'#role-pretraining',  text:'HM wants Eva on debrief panel',                  urgent:false, decline:false },
+      { time:'1:20p',  from:'Marcus W', ctx:'DM',                 text:'declining the 3pm — too short notice',            urgent:true,  decline:true  },
+    ],
+  },
+  gcal: {
+    color:C.sky, bg:C.skyBg, border:'#90B8E8',
+    short:'Cal', label:'Google Calendar', sub:'RSVPs · declines · after-hours',
+    items:[
+      { time:'7:55a',    from:'Theo R',         text:'declined Tue 2pm panel · sent at 7:55a',  urgent:true,  decline:true,  afterHrs:false },
+      { time:'9:00a',    from:'L. Park onsite', text:'block missing 1 interviewer (Eva K)',      urgent:true,  decline:false, afterHrs:false },
+      { time:'10:30a',   from:'J. Alvarez TPM', text:'Devon P accepted',                         urgent:false, decline:false, afterHrs:false },
+      { time:'2:15p',    from:'Lin Y',          text:'declined Fri 11am — calendar conflict',    urgent:true,  decline:true,  afterHrs:false },
+      { time:'after 6p', from:'Marcus W',       text:'declined invite (after hours)',            urgent:true,  decline:true,  afterHrs:true  },
+    ],
+  },
+  ml: {
+    color:C.clay, bg:C.clayBg, border:C.clayLight,
+    short:'ML', label:'ModernLoop', sub:'My tasks · alerts · queue',
+    items:[
+      { time:'live',   from:'REQ-2041',         ctx:'my tasks', text:'Sr ML panel · needs 5 interviewers · 1h old', urgent:true  },
+      { time:'live',   from:'REQ-2035',         ctx:'my tasks', text:'Staff iOS · no candidate response · 2d',       urgent:true  },
+      { time:'9:30a',  from:'REQ-2039',         ctx:'my tasks', text:'PD phone · new request from Devon P',          urgent:false },
+      { time:'11:45a', from:'REQ-2042',         ctx:'alerts',   text:'RE Alignment · debrief mismatch with Gcal',    urgent:true  },
+      { time:'1:00p',  from:'Module · TS Front',ctx:'modules',  text:'low coverage flag (3 trained)',                urgent:false },
+    ],
+  },
 };
 
-const TEAM_CANDIDATES = [
-  { name: 'Maya Chen',    kind: 'recruiter', initials: 'MC', focus: 'Research + ML · 7 roles',
-    candidates: [
-      { name: 'R. Okafor',  role: 'Sr ML Engineer, Pretraining',  stage: 'Onsite' },
-      { name: 'L. Park',    role: 'Research Engineer, Alignment', stage: 'Final'  },
-      { name: 'S. Vora',    role: 'MoTS, RL',                     stage: 'Phone'  },
-      { name: 'J. Patel',   role: 'Security Engineer',            stage: 'Phone'  },
-    ] },
-  { name: 'Devon Park',   kind: 'recruiter', initials: 'DP', focus: 'Product Eng + Design · 6 roles',
-    candidates: [
-      { name: 'J. Alvarez', role: 'TPM, Model Deployment',     stage: 'Onsite' },
-      { name: 'M. Singh',   role: 'Sr Frontend, claude.ai',    stage: 'Onsite' },
-      { name: 'K. Liu',     role: 'Product Designer, Claude',  stage: 'Phone'  },
-      { name: 'T. Adeyemi', role: 'Staff iOS Engineer',        stage: 'Onsite' },
-    ] },
-  { name: 'Ananya Rao',   kind: 'sourcer',   initials: 'AR', focus: 'Research scientists · 142 pipeline',
-    candidates: [
-      { name: 'H. Tanaka',  role: 'Research Scientist, Interp',   stage: 'Source'   },
-      { name: 'P. Iyer',    role: 'Research Engineer, Alignment', stage: 'Outreach' },
-      { name: 'N. Schmidt', role: 'Sr ML Engineer, Pretraining',  stage: 'Outreach' },
-    ] },
-  { name: 'Marco Silva',  kind: 'sourcer',   initials: 'MS', focus: 'Infra + Security · 98 pipeline',
-    candidates: [
-      { name: 'D. Park',     role: 'Security Engineer',      stage: 'Source'   },
-      { name: 'R. Banerjee', role: 'Infra SWE, Inference',   stage: 'Outreach' },
-    ] },
-  { name: 'Jules Bennett', kind: 'sourcer',  initials: 'JB', focus: 'Product + Design · 121 pipeline',
-    candidates: [
-      { name: 'C. Mendoza', role: 'Product Designer, Claude', stage: 'Outreach' },
-      { name: 'F. Akhtar',  role: 'Brand Designer',           stage: 'Source'   },
-      { name: 'G. Wu',      role: 'Sr Frontend, claude.ai',   stage: 'Outreach' },
-    ] },
+const TEAM = [
+  { name:'Maya Chen',    kind:'recruiter', initials:'MC', focus:'Research + ML · 7 roles',
+    people:[
+      {name:'R. Okafor',  role:'Sr ML Engineer, Pretraining',  stage:'Onsite'},
+      {name:'L. Park',    role:'Research Engineer, Alignment', stage:'Final'},
+      {name:'S. Vora',    role:'MoTS, RL',                     stage:'Phone'},
+      {name:'J. Patel',   role:'Security Engineer',            stage:'Phone'},
+    ]},
+  { name:'Devon Park',   kind:'recruiter', initials:'DP', focus:'Product Eng + Design · 6 roles',
+    people:[
+      {name:'J. Alvarez', role:'TPM, Model Deployment',       stage:'Onsite'},
+      {name:'M. Singh',   role:'Sr Frontend, claude.ai',      stage:'Onsite'},
+      {name:'K. Liu',     role:'Product Designer, Claude',    stage:'Phone'},
+      {name:'T. Adeyemi', role:'Staff iOS Engineer',          stage:'Onsite'},
+    ]},
+  { name:'Ananya Rao',   kind:'sourcer', initials:'AR', focus:'Research scientists · 142 pipeline',
+    people:[
+      {name:'H. Tanaka',  role:'Research Scientist, Interp',   stage:'Source'},
+      {name:'P. Iyer',    role:'Research Engineer, Alignment', stage:'Outreach'},
+      {name:'N. Schmidt', role:'Sr ML Engineer, Pretraining',  stage:'Outreach'},
+    ]},
+  { name:'Marco Silva',  kind:'sourcer', initials:'MS', focus:'Infra + Security · 98 pipeline',
+    people:[
+      {name:'D. Park',     role:'Security Engineer',    stage:'Source'},
+      {name:'R. Banerjee', role:'Infra SWE, Inference', stage:'Outreach'},
+    ]},
+  { name:'Jules Bennett', kind:'sourcer', initials:'JB', focus:'Product + Design · 121 pipeline',
+    people:[
+      {name:'C. Mendoza', role:'Product Designer, Claude',  stage:'Outreach'},
+      {name:'F. Akhtar',  role:'Brand Designer',            stage:'Source'},
+      {name:'G. Wu',      role:'Sr Frontend, claude.ai',    stage:'Outreach'},
+    ]},
 ];
 
 const INTERVIEWERS = [
-  { name: 'Priya Nadar',  hours: 8.5, cap: 6, sched: 12, completed: 7,  kinds: { HM: 5, CD: 4, SD: 3 } },
-  { name: 'David Lin',    hours: 9.0, cap: 8, sched: 11, completed: 6,  kinds: { CD: 5, SD: 4, TS: 2 } },
-  { name: 'Eva Kowalski', hours: 6.5, cap: 6, sched:  9, completed: 5,  kinds: { CL: 4, HM: 3, TS: 2 } },
-  { name: 'James Kim',    hours: 5.0, cap: 6, sched:  7, completed: 4,  kinds: { CL: 4, TS: 3 } },
-  { name: 'Sara Mendez',  hours: 4.5, cap: 6, sched:  6, completed: 3,  kinds: { TS: 4, CD: 2 } },
-  { name: 'Theo Reyes',   hours: 3.0, cap: 6, sched:  4, completed: 2,  kinds: { CL: 3, HM: 1 } },
-  { name: 'Lin Yamamoto', hours: 2.5, cap: 4, sched:  3, completed: 1,  kinds: { SD: 2, CD: 1 } },
-  { name: 'Marcus Webb',  hours: 1.5, cap: 6, sched:  2, completed: 1,  kinds: { TS: 2 } },
+  { name:'Priya Nadar',  hours:8.5, cap:6, sched:12, done:7,  kinds:{HM:5,CD:4,SD:3} },
+  { name:'David Lin',    hours:9.0, cap:8, sched:11, done:6,  kinds:{CD:5,SD:4,TS:2} },
+  { name:'Eva Kowalski', hours:6.5, cap:6, sched:9,  done:5,  kinds:{CL:4,HM:3,TS:2} },
+  { name:'James Kim',    hours:5.0, cap:6, sched:7,  done:4,  kinds:{CL:4,TS:3} },
+  { name:'Sara Mendez',  hours:4.5, cap:6, sched:6,  done:3,  kinds:{TS:4,CD:2} },
+  { name:'Theo Reyes',   hours:3.0, cap:6, sched:4,  done:2,  kinds:{CL:3,HM:1} },
+  { name:'Lin Yamamoto', hours:2.5, cap:4, sched:3,  done:1,  kinds:{SD:2,CD:1} },
+  { name:'Marcus Webb',  hours:1.5, cap:6, sched:2,  done:1,  kinds:{TS:2} },
 ];
 
-const DECLINE_DETAIL = [
-  { name: 'Marcus Webb',  rate: 42, count: 23, total: 55, period: 'last 30d', note: 'Often "not enough notice"',
-    incidents: [
-      { cand: 'R. Okafor',  kind: 'TS', date: 'May 12', outcome: 'rescheduled (3d slip)' },
-      { cand: 'K. Liu',     kind: 'TS', date: 'May 8',  outcome: 'lost slot' },
-      { cand: 'J. Alvarez', kind: 'HM', date: 'May 5',  outcome: 'rescheduled' },
-      { cand: 'T. Adeyemi', kind: 'CD', date: 'Apr 30', outcome: 'lost slot' },
-    ] },
-  { name: 'Lin Yamamoto', rate: 38, count: 18, total: 47, period: 'last 30d', note: 'Declines Fri afternoons',
-    incidents: [
-      { cand: 'M. Singh',   kind: 'SD', date: 'May 10', outcome: 'rescheduled' },
-      { cand: 'S. Vora',    kind: 'SD', date: 'May 3',  outcome: 'lost slot' },
-      { cand: 'L. Park',    kind: 'CD', date: 'Apr 26', outcome: 'rescheduled' },
-    ] },
-  { name: 'Theo Reyes',   rate: 35, count: 14, total: 40, period: 'last 30d', note: 'Calendar conflicts (recurring 1:1)',
-    incidents: [
-      { cand: 'R. Okafor', kind: 'CL', date: 'May 13', outcome: 'rescheduled today' },
-      { cand: 'H. Tanaka', kind: 'CL', date: 'May 6',  outcome: 'rescheduled' },
-    ] },
+const DECLINES = [
+  { name:'Marcus Webb',  rate:42, count:23, total:55, note:'Often "not enough notice"',
+    incidents:[
+      {date:'May 12', kind:'TS', cand:'R. Okafor',  outcome:'rescheduled (3d slip)'},
+      {date:'May 8',  kind:'TS', cand:'K. Liu',     outcome:'lost slot'},
+      {date:'May 5',  kind:'HM', cand:'J. Alvarez', outcome:'rescheduled'},
+      {date:'Apr 30', kind:'CD', cand:'T. Adeyemi', outcome:'lost slot'},
+    ]},
+  { name:'Lin Yamamoto', rate:38, count:18, total:47, note:'Declines Fri afternoons',
+    incidents:[
+      {date:'May 10', kind:'SD', cand:'M. Singh', outcome:'rescheduled'},
+      {date:'May 3',  kind:'SD', cand:'S. Vora',  outcome:'lost slot'},
+      {date:'Apr 26', kind:'CD', cand:'L. Park',  outcome:'rescheduled'},
+    ]},
+  { name:'Theo Reyes',   rate:35, count:14, total:40, note:'Calendar conflicts (recurring 1:1)',
+    incidents:[
+      {date:'May 13', kind:'CL', cand:'R. Okafor', outcome:'rescheduled today'},
+      {date:'May 6',  kind:'CL', cand:'H. Tanaka', outcome:'rescheduled'},
+    ]},
 ];
 
-const SHARED_QUEUE = {
-  partner: { name: 'Sam Reyes', initials: 'SR' },
-  me:      { name: 'Alex Chen', initials: 'AC' },
-  period:  'this week',
-  stats: [
-    { k: 'Requests picked up',   me: 14,     them: 11,    lowerBetter: false },
-    { k: 'Interviews scheduled', me: 28,     them: 24,    lowerBetter: false },
-    { k: 'Confirmed',            me: 22,     them: 19,    lowerBetter: false },
-    { k: 'Pending > 24h',        me:  3,     them:  5,    lowerBetter: true  },
-    { k: 'Avg time-to-schedule', me: '1.2d', them: '1.6d', isText: true },
+const QUEUE = {
+  me:      {name:'Alex Chen',  initials:'AC'},
+  partner: {name:'Sam Reyes',  initials:'SR'},
+  stats:[
+    {label:'Requests picked up',   me:14,     them:11,    lowerBetter:false},
+    {label:'Interviews scheduled', me:28,     them:24,    lowerBetter:false},
+    {label:'Confirmed',            me:22,     them:19,    lowerBetter:false},
+    {label:'Pending > 24h',        me:3,      them:5,     lowerBetter:true},
+    {label:'Avg time-to-schedule', me:'1.2d', them:'1.6d'},
   ],
 };
 
-const ML_MODULES = [
-  { name: 'HM Screen · ML/Research', sched: 18, done: 13, health: 'ok',    trend: [10,14,16,18] },
-  { name: 'Coding · Python',          sched: 22, done: 14, health: 'ok',    trend: [18,20,21,22] },
-  { name: 'System Design · Infra',    sched: 11, done:  7, health: 'stale', trend: [12,10, 9,11] },
-  { name: 'Culture · Core',           sched: 14, done:  9, health: 'ok',    trend: [12,13,14,14] },
-  { name: 'Tech Screen · Frontend',   sched:  9, done:  6, health: 'low',   trend: [ 4, 6, 7, 9] },
-  { name: 'Research Take-home',       sched:  6, done:  3, health: 'ok',    trend: [ 5, 6, 5, 6] },
+const MODULES = [
+  {name:'HM Screen · ML/Research', done:13, sched:18, health:'ok',    trend:[10,14,16,18]},
+  {name:'Coding · Python',          done:14, sched:22, health:'ok',    trend:[18,20,21,22]},
+  {name:'System Design · Infra',    done:7,  sched:11, health:'stale', trend:[12,10,9,11]},
+  {name:'Culture · Core',           done:9,  sched:14, health:'ok',    trend:[12,13,14,14]},
+  {name:'Tech Screen · Frontend',   done:6,  sched:9,  health:'low',   trend:[4,6,7,9]},
+  {name:'Research Take-home',       done:3,  sched:6,  health:'ok',    trend:[5,6,5,6]},
 ];
+const HEALTH = {ok:{label:'Healthy',color:C.olive}, stale:{label:'Stale rubric',color:C.clay}, low:{label:'Low coverage',color:C.clay}, new:{label:'New',color:C.heather}};
 
-const HEALTH = {
-  ok:    { label: 'Healthy',      color: '#5C6B3A' },
-  stale: { label: 'Stale rubric', color: '#D97757' },
-  low:   { label: 'Low coverage', color: '#D97757' },
-  new:   { label: 'New',          color: '#7B5EA7' },
+const STAGE = {
+  Onsite:  {color:C.clay,    bg:C.clayBg},
+  Final:   {color:C.olive,   bg:C.oliveBg},
+  Phone:   {color:C.sky,     bg:C.skyBg},
+  Source:  {color:C.fig,     bg:C.figBg},
+  Outreach:{color:C.muted,   bg:C.alt},
 };
 
-// ── Primitive components ───────────────────────────────────────────────────
+// ── Primitives ─────────────────────────────────────────────────────────────
+const chip = (text, color, bg, style={}) => (
+  <span style={{display:'inline-flex',alignItems:'center',padding:'2px 8px',borderRadius:999,border:`1px solid ${color}`,background:bg||'transparent',color,fontSize:11,fontWeight:500,whiteSpace:'nowrap',...style}}>{text}</span>
+);
 
-function Chip({ children, color = T.muted, bg = 'transparent', xs }) {
-  return (
-    <span style={{
-      display: 'inline-flex', alignItems: 'center', gap: 3,
-      padding: xs ? '2px 6px' : '3px 8px',
-      borderRadius: 9999,
-      border: `1px solid ${color}`,
-      background: bg, color,
-      fontSize: xs ? 11 : 12, fontWeight: 500,
-      lineHeight: 1.2, whiteSpace: 'nowrap',
-    }}>{children}</span>
-  );
+const hr = (m='10px 0') => <div style={{height:1,background:C.border,margin:m}}/>;
+
+function Avatar({initials, size=28, kind='recruiter'}) {
+  return <div style={{width:size,height:size,borderRadius:'50%',background:kind==='recruiter'?C.clayBg:C.oliveBg,border:`1.5px solid ${kind==='recruiter'?C.clay:C.olive}`,color:kind==='recruiter'?C.clay:C.olive,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:size*.38,fontWeight:700,flexShrink:0}}>{initials}</div>;
 }
 
-function Avatar({ initials, size = 28, kind = 'recruiter' }) {
-  const bg    = kind === 'recruiter' ? T.warnBg  : T.oliveBg;
-  const color = kind === 'recruiter' ? T.clay    : T.olive;
-  return (
-    <div style={{
-      width: size, height: size, borderRadius: '50%',
-      background: bg, border: `1.5px solid ${color}`, color,
-      display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-      fontSize: size * 0.38, fontWeight: 700, flexShrink: 0,
-    }}>{initials}</div>
-  );
+function Sparkline({values, color}) {
+  const W=72,H=18,max=Math.max(...values,1);
+  const pts=values.map((v,i)=>`${((i/(values.length-1))*W).toFixed(1)},${(H-2-(v/max)*(H-4)).toFixed(1)}`).join(' ');
+  return <svg width={W} height={H}><polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>;
 }
 
-function Divider() {
-  return <div style={{ height: 1, background: T.border, margin: '10px 0' }}/>;
+function Card({children, style={}, warnLeft=false}) {
+  return <div style={{background:C.surface,border:`1px solid ${warnLeft?C.clayLight:C.border}`,borderLeft:warnLeft?`3px solid ${C.clay}`:undefined,borderRadius:12,padding:'14px 16px',...style}}>{children}</div>;
 }
 
-function Sparkline({ values, color }) {
-  if (!values || values.length < 2) return null;
-  const max = Math.max(...values, 1);
-  const W = 72, H = 18;
-  const pts = values.map((v, i) => {
-    const x = (i / (values.length - 1)) * W;
-    const y = H - 2 - (v / max) * (H - 4);
-    return `${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
+function SecTitle({children, sub, warn=false, right}) {
   return (
-    <svg width={W} height={H} style={{ display: 'block', flexShrink: 0 }}>
-      <polyline points={pts} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-    </svg>
-  );
-}
-
-function KindLegend() {
-  return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
-      {['HM','TS','CD','SD','CL'].map(k => (
-        <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, color: T.muted }}>
-          <span style={{ width: 8, height: 8, borderRadius: 2, background: KIND_COLORS[k], flexShrink: 0 }}/>
-          {KIND_LABEL[k]}
-        </span>
-      ))}
-    </div>
-  );
-}
-
-function SectionTitle({ children, subtitle, right }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.slate, letterSpacing: '-0.02em' }}>{children}</h2>
-        {subtitle && <span style={{ fontSize: 12, color: T.muted }}>{subtitle}</span>}
+    <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:12}}>
+      <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+        <h2 style={{margin:0,fontSize:15,fontWeight:600,color:warn?C.clay:C.slate,letterSpacing:'-0.02em'}}>{children}</h2>
+        {sub && <span style={{fontSize:12,color:C.muted}}>{sub}</span>}
       </div>
       {right}
     </div>
@@ -252,38 +234,24 @@ function SectionTitle({ children, subtitle, right }) {
 
 // ── Section 1: Header ──────────────────────────────────────────────────────
 function Header() {
-  const toolColors = { olive: [T.oliveBg, T.olive], clay: [T.warnBg, T.clay], sky: [T.skyBg, T.sky], fig: [T.figBg, T.fig], heather: [T.heatherBg, T.heather] };
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-      padding: '18px 32px 14px',
-      borderBottom: `1px solid ${T.border}`,
-      background: T.ivory,
-      position: 'sticky', top: 0, zIndex: 10,
-    }}>
+    <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'18px 32px 14px',borderBottom:`1px solid ${C.border}`,background:C.ivory,position:'sticky',top:0,zIndex:10}}>
       <div>
-        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 700, color: T.slate, letterSpacing: '-0.03em', lineHeight: 1.1 }}>
-          RC Dashboard
-        </h1>
-        <p style={{ margin: '3px 0 0', fontSize: 13, color: T.muted }}>
-          <span style={{ color: T.slate, fontWeight: 500 }}>{TODAY_LABEL}</span>
+        <h1 style={{margin:0,fontSize:22,fontWeight:700,color:C.slate,letterSpacing:'-0.03em',lineHeight:1.1}}>RC Dashboard</h1>
+        <p style={{margin:'3px 0 0',fontSize:13,color:C.muted}}>
+          <span style={{color:C.slate,fontWeight:500}}>Wed · May 15, 2026</span>
           {' · paired w/ Sam R · 2 recruiters · 3 sourcers · 23 open roles · 58 interviewers'}
         </p>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <span style={{ fontSize: 12, color: T.mutedLight }}>jump to</span>
-        <div style={{ display: 'flex', gap: 6 }}>
-          {TOOLS.map(t => {
-            const [bg, color] = toolColors[t.kind] || ['#F0EFED', T.muted];
-            return (
-              <a key={t.name} href={t.url} target="_blank" rel="noopener noreferrer" title={t.name} style={{
-                width: 32, height: 32, borderRadius: '50%',
-                background: bg, border: `1.5px solid ${color}`, color,
-                display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, textDecoration: 'none',
-              }}>{t.short}</a>
-            );
-          })}
+      <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <span style={{fontSize:12,color:C.faint}}>jump to</span>
+        <div style={{display:'flex',gap:6}}>
+          {TOOLS.map(t => (
+            <a key={t.name} href={t.url} target="_blank" rel="noopener noreferrer" title={t.name}
+               style={{width:32,height:32,borderRadius:'50%',background:t.bg,border:`1.5px solid ${t.border}`,color:t.color,display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,textDecoration:'none'}}>
+              {t.short}
+            </a>
+          ))}
         </div>
       </div>
     </div>
@@ -293,21 +261,13 @@ function Header() {
 // ── Section 2: KPI strip ───────────────────────────────────────────────────
 function KPIStrip() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
-      {KPIS.map((kpi, i) => (
-        <div key={i} style={{
-          background: kpi.warn ? T.warnBgLight : T.surface,
-          border: `1px solid ${kpi.warn ? T.clayLight : T.border}`,
-          borderRadius: 12, padding: '14px 16px',
-        }}>
-          <div style={{ fontSize: 11, fontWeight: 500, color: kpi.warn ? T.clay : T.muted, textTransform: 'uppercase', letterSpacing: '0.02em', marginBottom: 6 }}>
-            {kpi.label}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
-            <span style={{ fontSize: 32, fontWeight: 700, color: kpi.warn ? T.clay : T.slate, letterSpacing: '-0.03em', lineHeight: 1 }}>
-              {kpi.value}
-            </span>
-            <span style={{ fontSize: 11, color: kpi.warn ? T.clay : T.muted }}>{kpi.note}</span>
+    <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
+      {KPIS.map((k,i) => (
+        <div key={i} style={{background:k.warn?C.clayBgSoft:C.surface,border:`1px solid ${k.warn?C.clayLight:C.border}`,borderRadius:12,padding:'14px 16px'}}>
+          <div style={{fontSize:11,fontWeight:500,color:k.warn?C.clay:C.muted,textTransform:'uppercase',letterSpacing:'0.02em',marginBottom:6}}>{k.label}</div>
+          <div style={{display:'flex',alignItems:'baseline',gap:6}}>
+            <span style={{fontSize:32,fontWeight:700,color:k.warn?C.clay:C.slate,letterSpacing:'-0.03em',lineHeight:1}}>{k.value}</span>
+            <span style={{fontSize:11,color:k.warn?C.clay:C.muted}}>{k.note}</span>
           </div>
         </div>
       ))}
@@ -316,66 +276,46 @@ function KPIStrip() {
 }
 
 // ── Section 3: Daily feed ──────────────────────────────────────────────────
-const SOURCE_META = {
-  slack: { label: 'Slack',           short: '#',   color: T.heather, bg: T.heatherBg, border: '#C4A8E0', sub: 'DMs · channels · pings' },
-  gcal:  { label: 'Google Calendar', short: 'Cal', color: T.sky,     bg: T.skyBg,     border: '#A0BFE8', sub: 'RSVPs · declines · after-hours' },
-  ml:    { label: 'ModernLoop',      short: 'ML',  color: T.clay,    bg: T.warnBg,    border: T.clayLight, sub: 'My tasks · alerts · queue' },
-};
-const FILTERS = ['today', '+ yesterday', 'after-hours only', 'declines only', 'urgent only'];
+const FILTERS = ['today','+ yesterday','after-hours only','declines only','urgent only'];
 
-function FeedItem({ item, srcColor }) {
+function FeedItem({item, srcColor}) {
   return (
-    <div style={{
-      borderRadius: 6, border: `1px solid ${item.urgent ? T.clayLight : T.border}`,
-      borderLeft: `3px solid ${item.urgent ? T.clay : srcColor}`,
-      background: item.urgent ? T.warnBgLight : T.surface,
-      padding: '8px 10px',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 6 }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: T.slate }}>
-          {item.from || item.who}
-          {item.type && <span style={{ color: T.muted, fontWeight: 400 }}> · {item.type}</span>}
-          {item.tab  && <span style={{ color: T.muted, fontWeight: 400 }}> · {item.tab}</span>}
+    <div style={{borderRadius:6,border:`1px solid ${item.urgent?C.clayLight:C.border}`,borderLeft:`3px solid ${item.urgent?C.clay:srcColor}`,background:item.urgent?C.clayBgSoft:C.surface,padding:'8px 10px',marginBottom:6}}>
+      <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:6}}>
+        <span style={{fontSize:12,fontWeight:600,color:C.slate}}>
+          {item.from}
+          {item.ctx && <span style={{color:C.muted,fontWeight:400}}> · {item.ctx}</span>}
         </span>
-        <span style={{ fontSize: 11, color: T.mutedLight, whiteSpace: 'nowrap', flexShrink: 0 }}>{item.time}</span>
+        <span style={{fontSize:11,color:C.faint,whiteSpace:'nowrap',flexShrink:0}}>{item.time}</span>
       </div>
-      <p style={{ margin: '3px 0 0', fontSize: 12, color: T.slate, lineHeight: 1.4 }}>{item.text}</p>
-      {(item.decline || item.afterHours || item.urgent) && (
-        <div style={{ display: 'flex', gap: 4, marginTop: 6, flexWrap: 'wrap' }}>
-          {item.decline    && <Chip xs color={T.clay}  bg={T.warnBg}    >decline</Chip>}
-          {item.afterHours && <Chip xs color={T.muted} bg={T.surfaceAlt}>after hrs</Chip>}
-          {item.urgent     && <Chip xs color={T.clay}  bg={T.warnBg}    >action needed</Chip>}
-        </div>
-      )}
+      <p style={{margin:'3px 0 0',fontSize:12,color:C.slate,lineHeight:1.4}}>{item.text}</p>
+      <div style={{display:'flex',gap:4,marginTop:6,flexWrap:'wrap'}}>
+        {item.decline  && chip('decline',      C.clay,  C.clayBg)}
+        {item.afterHrs && chip('after hrs',    C.muted, C.alt)}
+        {item.urgent   && chip('action needed',C.clay,  C.clayBg)}
+        {item.ctx === 'DM' || item.ctx?.startsWith('#') ? chip('open thread', C.faint, C.alt) : null}
+      </div>
     </div>
   );
 }
 
-function FeedColumn({ src }) {
-  const meta = SOURCE_META[src];
-  const items = DAILY_FEED[src];
-  const urgentCount = items.filter(i => i.urgent).length;
+function FeedCol({src}) {
+  const d = FEED[src];
+  const urgent = d.items.filter(i=>i.urgent).length;
   return (
-    <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: '50%',
-            background: meta.bg, border: `1.5px solid ${meta.border}`, color: meta.color,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 700, flexShrink: 0,
-          }}>{meta.short}</div>
+    <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,padding:14}}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:10}}>
+        <div style={{display:'flex',alignItems:'center',gap:8}}>
+          <div style={{width:30,height:30,borderRadius:'50%',background:d.bg,border:`1.5px solid ${d.border}`,color:d.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:11,fontWeight:700,flexShrink:0}}>{d.short}</div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: T.slate }}>{meta.label}</div>
-            <div style={{ fontSize: 11, color: T.mutedLight }}>{meta.sub}</div>
+            <div style={{fontSize:13,fontWeight:600,color:C.slate}}>{d.label}</div>
+            <div style={{fontSize:11,color:C.faint}}>{d.sub}</div>
           </div>
         </div>
-        {urgentCount > 0 && <Chip xs color={T.clay} bg={T.warnBg}>{urgentCount} urgent</Chip>}
+        {urgent>0 && chip(`${urgent} urgent`, C.clay, C.clayBg)}
       </div>
-      <Divider/>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {items.map((item, i) => <FeedItem key={i} item={item} srcColor={meta.color}/>)}
-      </div>
+      {hr('0 0 10px')}
+      {d.items.map((item,i) => <FeedItem key={i} item={item} srcColor={d.color}/>)}
     </div>
   );
 }
@@ -384,69 +324,53 @@ function DailyFeed() {
   const [active, setActive] = React.useState('today');
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.slate, letterSpacing: '-0.02em' }}>What needs me today</h2>
-        <div style={{ display: 'flex', gap: 6 }}>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+        <h2 style={{margin:0,fontSize:15,fontWeight:600,color:C.slate,letterSpacing:'-0.02em'}}>What needs me today</h2>
+        <div style={{display:'flex',gap:6}}>
           {FILTERS.map(f => (
-            <button key={f} onClick={() => setActive(f)} style={{
-              padding: '4px 10px', borderRadius: 9999,
-              border: `1px solid ${active === f ? T.slate : T.border}`,
-              background: active === f ? T.slate : T.surface,
-              color: active === f ? T.ivory : T.muted,
-              fontSize: 12, fontWeight: 500, cursor: 'pointer',
-            }}>{f}</button>
+            <button key={f} onClick={()=>setActive(f)} style={{padding:'4px 10px',borderRadius:999,border:`1px solid ${active===f?C.slate:C.border}`,background:active===f?C.slate:C.surface,color:active===f?C.ivory:C.muted,fontSize:12,fontWeight:500,cursor:'pointer'}}>
+              {f}
+            </button>
           ))}
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12 }}>
-        <FeedColumn src="slack"/>
-        <FeedColumn src="gcal"/>
-        <FeedColumn src="ml"/>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:12}}>
+        <FeedCol src="slack"/>
+        <FeedCol src="gcal"/>
+        <FeedCol src="ml"/>
       </div>
     </div>
   );
 }
 
 // ── Section 4: Team & candidates ──────────────────────────────────────────
-const STAGE_STYLE = {
-  Onsite:   [T.clay,   T.warnBg   ],
-  Final:    [T.olive,  T.oliveBg  ],
-  Phone:    [T.sky,    T.skyBg    ],
-  Source:   [T.fig,    T.figBg    ],
-  Outreach: [T.muted,  T.surfaceAlt],
-};
-
-function PersonCard({ p }) {
-  const isRec = p.kind === 'recruiter';
-  const accent = isRec ? T.clay : T.olive;
+function PersonCard({p}) {
+  const isRec = p.kind==='recruiter';
+  const accent = isRec?C.clay:C.olive;
+  const accentBorder = isRec?C.clayLight:`${C.oliveLight}90`;
   return (
-    <div style={{
-      background: T.surface,
-      border: `1px solid ${isRec ? T.clayLight : T.oliveLight + '80'}`,
-      borderTop: `3px solid ${accent}`,
-      borderRadius: 12, padding: 12,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+    <div style={{background:C.surface,border:`1px solid ${accentBorder}`,borderTop:`3px solid ${accent}`,borderRadius:12,padding:12}}>
+      <div style={{display:'flex',alignItems:'flex-start',gap:8,marginBottom:8}}>
         <Avatar initials={p.initials} size={30} kind={p.kind}/>
         <div>
-          <div style={{ fontSize: 13, fontWeight: 600, color: T.slate }}>{p.name}</div>
-          <div style={{ fontSize: 10, color: T.muted, marginTop: 1 }}>{p.kind} · {p.focus}</div>
+          <div style={{fontSize:13,fontWeight:600,color:C.slate}}>{p.name}</div>
+          <div style={{fontSize:10,color:C.muted,marginTop:1}}>{p.kind} · {p.focus}</div>
         </div>
       </div>
-      <Divider/>
-      {p.candidates.map((c, i) => {
-        const [stageColor, stageBg] = STAGE_STYLE[c.stage] || STAGE_STYLE.Outreach;
+      {hr('0 0 8px')}
+      {p.people.map((c,i)=>{
+        const s = STAGE[c.stage]||STAGE.Outreach;
         return (
-          <div key={i} style={{ padding: '5px 0', borderBottom: i < p.candidates.length - 1 ? `1px dashed ${T.border}` : 'none' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 4 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: T.slate }}>{c.name}</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: stageColor, background: stageBg, padding: '1px 5px', borderRadius: 4 }}>{c.stage}</span>
+          <div key={i} style={{padding:'5px 0',borderBottom:i<p.people.length-1?`1px dashed ${C.border}`:'none'}}>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'baseline',gap:4}}>
+              <span style={{fontSize:12,fontWeight:600,color:C.slate}}>{c.name}</span>
+              <span style={{fontSize:10,fontWeight:600,color:s.color,background:s.bg,padding:'1px 5px',borderRadius:4,flexShrink:0}}>{c.stage}</span>
             </div>
-            <div style={{ fontSize: 10, color: T.muted, margin: '2px 0 4px', lineHeight: 1.3 }}>{c.role}</div>
-            <div style={{ display: 'flex', gap: 4 }}>
-              <Chip xs color={T.clay}  bg={T.warnBg}    >ML</Chip>
-              <Chip xs color={T.olive} bg={T.oliveBg}   >GH</Chip>
-              <Chip xs color={T.muted} bg={T.surfaceAlt}>IG</Chip>
+            <div style={{fontSize:10,color:C.muted,margin:'2px 0 4px',lineHeight:1.3}}>{c.role}</div>
+            <div style={{display:'flex',gap:4}}>
+              {chip('ML',C.clay,C.clayBg,{fontSize:10,padding:'1px 6px',cursor:'pointer'})}
+              {chip('GH',C.olive,C.oliveBg,{fontSize:10,padding:'1px 6px',cursor:'pointer'})}
+              {chip('IG',C.muted,C.alt,{fontSize:10,padding:'1px 6px',cursor:'pointer'})}
             </div>
           </div>
         );
@@ -455,75 +379,66 @@ function PersonCard({ p }) {
   );
 }
 
-function TeamCandidates() {
+function TeamSection() {
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.slate }}>Team · open candidates</h2>
-        <span style={{ fontSize: 11, color: T.mutedLight }}>per candidate: ML profile · GH link · IG = interview guide</span>
+      <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:12}}>
+        <h2 style={{margin:0,fontSize:15,fontWeight:600,color:C.slate}}>Team · open candidates</h2>
+        <span style={{fontSize:11,color:C.faint}}>per candidate: ML profile · GH link · IG = interview guide</span>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
-        {TEAM_CANDIDATES.map(p => <PersonCard key={p.name} p={p}/>)}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(5,1fr)',gap:10}}>
+        {TEAM.map(p=><PersonCard key={p.name} p={p}/>)}
       </div>
     </div>
   );
 }
 
 // ── Section 5: Interviewer capacity ───────────────────────────────────────
-function InterviewerCapacity() {
+function CapacitySection() {
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.slate }}>Interviewer capacity</h2>
-          <span style={{ fontSize: 12, color: T.muted }}>this week · what they're doing, not just hours</span>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:12}}>
+        <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+          <h2 style={{margin:0,fontSize:15,fontWeight:600,color:C.slate}}>Interviewer capacity</h2>
+          <span style={{fontSize:12,color:C.muted}}>this week · what they're doing, not just hours</span>
         </div>
-        <KindLegend/>
+        <div style={{display:'flex',flexWrap:'wrap',gap:8,alignItems:'center'}}>
+          {['HM','TS','CD','SD','CL'].map(k=>(
+            <span key={k} style={{display:'inline-flex',alignItems:'center',gap:4,fontSize:11,color:C.muted}}>
+              <span style={{width:8,height:8,borderRadius:2,background:KIND_COLOR[k],flexShrink:0}}/>
+              {KIND_NAME[k]}
+            </span>
+          ))}
+        </div>
       </div>
-      <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, overflow: 'hidden' }}>
-        <div style={{
-          display: 'grid', gridTemplateColumns: '160px 64px 96px 1fr 80px',
-          gap: 12, padding: '8px 16px',
-          background: T.surfaceAlt, borderBottom: `1px solid ${T.border}`,
-          fontSize: 11, fontWeight: 600, color: T.muted, textTransform: 'uppercase', letterSpacing: '0.03em',
-        }}>
+      <div style={{background:C.surface,border:`1px solid ${C.border}`,borderRadius:12,overflow:'hidden'}}>
+        <div style={{display:'grid',gridTemplateColumns:'160px 64px 96px 1fr 80px',gap:12,padding:'8px 16px',background:C.alt,borderBottom:`1px solid ${C.border}`,fontSize:11,fontWeight:600,color:C.muted,textTransform:'uppercase',letterSpacing:'0.03em'}}>
           <span>Interviewer</span>
-          <span style={{ textAlign: 'right' }}>This wk</span>
-          <span style={{ textAlign: 'right' }}>Hrs / cap</span>
+          <span style={{textAlign:'right'}}>This wk</span>
+          <span style={{textAlign:'right'}}>Hrs / cap</span>
           <span>Kind breakdown</span>
-          <span style={{ textAlign: 'right' }}>Done/sched</span>
+          <span style={{textAlign:'right'}}>Done/sched</span>
         </div>
-        {INTERVIEWERS.map((iv, i) => {
-          const over = iv.hours > iv.cap;
-          const total = Object.values(iv.kinds).reduce((a, b) => a + b, 0);
+        {INTERVIEWERS.map((iv,i)=>{
+          const over = iv.hours>iv.cap;
+          const total = Object.values(iv.kinds).reduce((a,b)=>a+b,0);
           return (
-            <div key={iv.name} style={{
-              display: 'grid', gridTemplateColumns: '160px 64px 96px 1fr 80px',
-              gap: 12, padding: '10px 16px', alignItems: 'center',
-              borderBottom: i < INTERVIEWERS.length - 1 ? `1px solid ${T.border}` : 'none',
-            }}>
-              <span style={{ fontSize: 13, fontWeight: 500, color: T.slate }}>{iv.name}</span>
-              <span style={{ textAlign: 'right', fontSize: 16, fontWeight: 700, color: T.slate }}>{total}</span>
-              <div style={{ textAlign: 'right' }}>
-                <span style={{ fontSize: 15, fontWeight: 700, color: over ? T.red : T.slate }}>{iv.hours}h</span>
-                <span style={{ fontSize: 11, color: T.muted }}>/{iv.cap}</span>
-                {over && <span style={{ marginLeft: 4, fontSize: 10, color: T.red, fontWeight: 600 }}>over</span>}
+            <div key={iv.name} style={{display:'grid',gridTemplateColumns:'160px 64px 96px 1fr 80px',gap:12,padding:'10px 16px',alignItems:'center',borderBottom:i<INTERVIEWERS.length-1?`1px solid ${C.border}`:'none'}}>
+              <span style={{fontSize:13,fontWeight:500,color:C.slate}}>{iv.name}</span>
+              <span style={{textAlign:'right',fontSize:16,fontWeight:700,color:C.slate}}>{total}</span>
+              <div style={{textAlign:'right'}}>
+                <span style={{fontSize:15,fontWeight:700,color:over?C.red:C.slate}}>{iv.hours}h</span>
+                <span style={{fontSize:11,color:C.muted}}>/{iv.cap}</span>
+                {over&&<span style={{marginLeft:4,fontSize:10,color:C.red,fontWeight:600}}>over</span>}
               </div>
-              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                {Object.entries(iv.kinds).map(([k, v]) => (
-                  <span key={k} style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 4,
-                    padding: '2px 7px', borderRadius: 4,
-                    background: KIND_BG[k], border: `1px solid ${KIND_COLORS[k]}30`,
-                    fontSize: 11, color: T.slate, fontWeight: 500,
-                  }}>
-                    {KIND_LABEL[k]} <b style={{ color: KIND_COLORS[k] }}>{v}</b>
+              <div style={{display:'flex',gap:4,flexWrap:'wrap'}}>
+                {Object.entries(iv.kinds).map(([k,v])=>(
+                  <span key={k} style={{display:'inline-flex',alignItems:'center',gap:4,padding:'2px 7px',borderRadius:4,background:KIND_BG[k],border:`1px solid ${KIND_COLOR[k]}30`,fontSize:11,color:C.slate,fontWeight:500}}>
+                    {KIND_NAME[k]} <b style={{color:KIND_COLOR[k]}}>{v}</b>
                   </span>
                 ))}
               </div>
-              <span style={{ textAlign: 'right', fontSize: 12, color: T.muted }}>
-                <b style={{ color: T.slate }}>{iv.completed}</b>/{iv.sched}
-              </span>
+              <span style={{textAlign:'right',fontSize:12,color:C.muted}}><b style={{color:C.slate}}>{iv.done}</b>/{iv.sched}</span>
             </div>
           );
         })}
@@ -533,45 +448,40 @@ function InterviewerCapacity() {
 }
 
 // ── Section 6a: Decline offenders ─────────────────────────────────────────
-function DeclineOffenders() {
+function DeclineSection() {
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 12 }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-          <h2 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: T.clay }}>Decline offenders</h2>
-          <span style={{ fontSize: 12, color: T.muted }}>interviews you scheduled that they bailed on</span>
+      <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:12}}>
+        <div style={{display:'flex',alignItems:'baseline',gap:8}}>
+          <h2 style={{margin:0,fontSize:15,fontWeight:600,color:C.clay}}>Decline offenders</h2>
+          <span style={{fontSize:12,color:C.muted}}>interviews you scheduled that they bailed on</span>
         </div>
-        <Chip xs color={T.muted} bg={T.surfaceAlt}>last 30d · &gt;25% rate</Chip>
+        {chip('last 30d · >25% rate', C.muted, C.alt)}
       </div>
-      {DECLINE_DETAIL.map((d, i) => (
-        <div key={i} style={{
-          background: T.warnBgLight, border: `1px solid ${T.clayLight}`,
-          borderLeft: `3px solid ${T.clay}`,
-          borderRadius: 12, padding: '12px 14px',
-          marginBottom: i < DECLINE_DETAIL.length - 1 ? 10 : 0,
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 4 }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: T.slate }}>{d.name}</span>
-              <span style={{ fontSize: 22, fontWeight: 800, color: T.red, lineHeight: 1, letterSpacing: '-0.02em' }}>{d.rate}%</span>
-              <span style={{ fontSize: 12, color: T.muted }}>{d.count} of {d.total} declined · {d.period}</span>
+      {DECLINES.map((d,i)=>(
+        <div key={i} style={{background:C.clayBgSoft,border:`1px solid ${C.clayLight}`,borderLeft:`3px solid ${C.clay}`,borderRadius:12,padding:'12px 14px',marginBottom:i<DECLINES.length-1?10:0}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8,marginBottom:4}}>
+            <div style={{display:'flex',alignItems:'baseline',gap:8,flexWrap:'wrap'}}>
+              <span style={{fontSize:14,fontWeight:600,color:C.slate}}>{d.name}</span>
+              <span style={{fontSize:22,fontWeight:800,color:C.red,lineHeight:1,letterSpacing:'-0.02em'}}>{d.rate}%</span>
+              <span style={{fontSize:12,color:C.muted}}>{d.count} of {d.total} declined · last 30d</span>
             </div>
-            <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-              <button style={{ padding: '4px 10px', borderRadius: 9999, border: `1px solid ${T.slate}`, background: T.surface, color: T.slate, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>Ping in Slack</button>
-              <button style={{ padding: '4px 10px', borderRadius: 9999, border: `1px solid ${T.border}`, background: T.surface, color: T.muted, fontSize: 11, fontWeight: 500, cursor: 'pointer' }}>Remove from pool</button>
+            <div style={{display:'flex',gap:6,flexShrink:0}}>
+              <button style={{padding:'4px 10px',borderRadius:999,border:`1px solid ${C.slate}`,background:C.surface,color:C.slate,fontSize:11,fontWeight:500,cursor:'pointer'}}>Ping in Slack</button>
+              <button style={{padding:'4px 10px',borderRadius:999,border:`1px solid ${C.border}`,background:C.surface,color:C.muted,fontSize:11,fontWeight:500,cursor:'pointer'}}>Remove from pool</button>
             </div>
           </div>
-          <p style={{ margin: '0 0 10px', fontSize: 12, color: T.muted, fontStyle: 'italic' }}>"{d.note}"</p>
-          <div style={{ borderTop: `1px solid ${T.clayLight}60` }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '76px 100px 1fr 140px', gap: 8, padding: '5px 0 3px', fontSize: 10, fontWeight: 600, color: T.mutedLight, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: `1px solid ${T.clayLight}40` }}>
-              <span>Date</span><span>Kind</span><span>Candidate</span><span style={{ textAlign: 'right' }}>Outcome</span>
+          <p style={{margin:'0 0 10px',fontSize:12,color:C.muted,fontStyle:'italic'}}>"{d.note}"</p>
+          <div style={{borderTop:`1px solid ${C.clayLight}60`}}>
+            <div style={{display:'grid',gridTemplateColumns:'76px 100px 1fr 140px',gap:8,padding:'5px 0 3px',fontSize:10,fontWeight:600,color:C.faint,textTransform:'uppercase',letterSpacing:'0.04em',borderBottom:`1px solid ${C.clayLight}40`}}>
+              <span>Date</span><span>Kind</span><span>Candidate</span><span style={{textAlign:'right'}}>Outcome</span>
             </div>
-            {d.incidents.map((it, j) => (
-              <div key={j} style={{ display: 'grid', gridTemplateColumns: '76px 100px 1fr 140px', gap: 8, padding: '5px 0', fontSize: 12, borderBottom: j < d.incidents.length - 1 ? `1px solid ${T.clayLight}30` : 'none', alignItems: 'center' }}>
-                <span style={{ color: T.muted }}>{it.date}</span>
-                <span><span style={{ fontSize: 10, fontWeight: 600, padding: '2px 6px', borderRadius: 4, background: T.surfaceAlt, border: `1px solid ${T.borderMed}`, color: T.slate }}>{KIND_LABEL[it.kind]}</span></span>
-                <span style={{ fontWeight: 500, color: T.slate }}>{it.cand}</span>
-                <span style={{ textAlign: 'right', color: it.outcome.includes('lost') ? T.red : T.muted, fontWeight: it.outcome.includes('lost') ? 600 : 400, fontSize: 11.5 }}>{it.outcome}</span>
+            {d.incidents.map((it,j)=>(
+              <div key={j} style={{display:'grid',gridTemplateColumns:'76px 100px 1fr 140px',gap:8,padding:'5px 0',fontSize:12,alignItems:'center',borderBottom:j<d.incidents.length-1?`1px solid ${C.clayLight}30`:'none'}}>
+                <span style={{color:C.muted}}>{it.date}</span>
+                <span><span style={{fontSize:10,fontWeight:600,padding:'2px 6px',borderRadius:4,background:C.alt,border:`1px solid ${C.borderMed}`,color:C.slate}}>{KIND_NAME[it.kind]}</span></span>
+                <span style={{fontWeight:500,color:C.slate}}>{it.cand}</span>
+                <span style={{textAlign:'right',color:it.outcome.includes('lost')?C.red:C.muted,fontWeight:it.outcome.includes('lost')?600:400,fontSize:11.5}}>{it.outcome}</span>
               </div>
             ))}
           </div>
@@ -582,91 +492,93 @@ function DeclineOffenders() {
 }
 
 // ── Section 6b: Shared queue ───────────────────────────────────────────────
-function SharedQueue() {
-  const { me, partner, period, stats } = SHARED_QUEUE;
+function QueueSection() {
+  const {me,partner,stats} = QUEUE;
   return (
-    <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-        <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.slate }}>Shared queue · me vs {partner.name}</h3>
-        <span style={{ fontSize: 11, color: T.muted }}>{period}</span>
+    <Card>
+      <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:10}}>
+        <h3 style={{margin:0,fontSize:13,fontWeight:600,color:C.slate}}>Shared queue · me vs {partner.name}</h3>
+        <span style={{fontSize:11,color:C.muted}}>this week</span>
       </div>
-      <Divider/>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 8, marginBottom: 4 }}>
+      {hr()}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 80px 80px',gap:8,marginBottom:4}}>
         <span/>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 4 }}>
+        <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:4}}>
           <Avatar initials={me.initials} size={20} kind="recruiter"/>
-          <span style={{ fontSize: 11, color: T.muted }}>me</span>
+          <span style={{fontSize:11,color:C.muted}}>me</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 4 }}>
+        <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:4}}>
           <Avatar initials={partner.initials} size={20} kind="sourcer"/>
-          <span style={{ fontSize: 11, color: T.muted }}>{partner.name.split(' ')[0]}</span>
+          <span style={{fontSize:11,color:C.muted}}>{partner.name.split(' ')[0]}</span>
         </div>
       </div>
-      {stats.map((s, i) => {
-        const meNum = typeof s.me === 'number' ? s.me : null;
-        const thNum = typeof s.them === 'number' ? s.them : null;
-        const meBetter  = meNum !== null && thNum !== null && (s.lowerBetter ? meNum < thNum : meNum > thNum);
-        const thBetter  = meNum !== null && thNum !== null && (s.lowerBetter ? thNum < meNum : thNum > meNum);
+      {stats.map((s,i)=>{
+        const meN  = typeof s.me==='number'?s.me:null;
+        const thN  = typeof s.them==='number'?s.them:null;
+        const meBetter  = meN!==null&&thN!==null&&(s.lowerBetter?meN<thN:meN>thN);
+        const thBetter  = meN!==null&&thN!==null&&(s.lowerBetter?thN<meN:thN>meN);
+        const hl = {background:C.oliveBg,borderRadius:4,padding:'1px 4px'};
         return (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 80px 80px', gap: 8, alignItems: 'center', padding: '5px 0', borderBottom: i < stats.length - 1 ? `1px solid ${T.border}` : 'none' }}>
-            <span style={{ fontSize: 12, color: T.slate }}>{s.k}</span>
-            <span style={{ textAlign: 'center', fontSize: 18, fontWeight: 700, color: meBetter ? T.olive : T.slate, background: meBetter ? T.oliveBg : 'transparent', borderRadius: 4, padding: meBetter ? '1px 4px' : 0 }}>{s.me}</span>
-            <span style={{ textAlign: 'center', fontSize: 18, fontWeight: 700, color: thBetter ? T.olive : T.slate, background: thBetter ? T.oliveBg : 'transparent', borderRadius: 4, padding: thBetter ? '1px 4px' : 0 }}>{s.them}</span>
+          <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 80px 80px',gap:8,alignItems:'center',padding:'5px 0',borderBottom:i<stats.length-1?`1px solid ${C.border}`:'none'}}>
+            <span style={{fontSize:12,color:C.slate}}>{s.label}</span>
+            <span style={{textAlign:'center',fontSize:18,fontWeight:700,color:meBetter?C.olive:C.slate,...(meBetter?hl:{})}}>{s.me}</span>
+            <span style={{textAlign:'center',fontSize:18,fontWeight:700,color:thBetter?C.olive:C.slate,...(thBetter?hl:{})}}>{s.them}</span>
           </div>
         );
       })}
-      <p style={{ margin: '10px 0 0', fontSize: 11, color: T.mutedLight, fontStyle: 'italic' }}>Friendly scoreboard · not a leaderboard</p>
-    </div>
+      <p style={{margin:'10px 0 0',fontSize:11,color:C.faint,fontStyle:'italic'}}>Friendly scoreboard · not a leaderboard</p>
+    </Card>
   );
 }
 
 // ── Section 6c: Module activity ────────────────────────────────────────────
-function ModuleActivity() {
+function ModuleSection() {
   return (
-    <div style={{ background: T.surface, border: `1px solid ${T.border}`, borderRadius: 12, padding: 14 }}>
-      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 10 }}>
-        <h3 style={{ margin: 0, fontSize: 13, fontWeight: 600, color: T.slate }}>Module activity</h3>
-        <span style={{ fontSize: 11, color: T.muted }}>4-week trend</span>
+    <Card>
+      <div style={{display:'flex',alignItems:'baseline',justifyContent:'space-between',marginBottom:10}}>
+        <h3 style={{margin:0,fontSize:13,fontWeight:600,color:C.slate}}>Module activity</h3>
+        <span style={{fontSize:11,color:C.muted}}>4-week trend</span>
       </div>
-      <Divider/>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 52px 80px 90px', gap: 8, padding: '0 0 4px', fontSize: 10, fontWeight: 600, color: T.mutedLight, textTransform: 'uppercase', letterSpacing: '0.04em', borderBottom: `1px solid ${T.border}`, marginBottom: 4 }}>
-        <span>Module</span><span style={{ textAlign: 'right' }}>Done/sched</span><span style={{ textAlign: 'center' }}>4-wk</span><span style={{ textAlign: 'right' }}>Health</span>
+      {hr()}
+      <div style={{display:'grid',gridTemplateColumns:'1fr 52px 80px 96px',gap:8,padding:'0 0 4px',fontSize:10,fontWeight:600,color:C.faint,textTransform:'uppercase',letterSpacing:'0.04em',borderBottom:`1px solid ${C.border}`,marginBottom:4}}>
+        <span>Module</span><span style={{textAlign:'right'}}>Done/sched</span><span style={{textAlign:'center'}}>4-wk</span><span style={{textAlign:'right'}}>Health</span>
       </div>
-      {ML_MODULES.map((m, i) => {
-        const h = HEALTH[m.health];
+      {MODULES.map((m,i)=>{
+        const h=HEALTH[m.health];
         return (
-          <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 52px 80px 90px', gap: 8, alignItems: 'center', padding: '6px 0', borderBottom: i < ML_MODULES.length - 1 ? `1px solid ${T.border}` : 'none' }}>
-            <span style={{ fontSize: 12, fontWeight: 500, color: T.slate, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={m.name}>{m.name}</span>
-            <span style={{ textAlign: 'right', fontSize: 12 }}><b style={{ color: T.slate }}>{m.done}</b><span style={{ color: T.muted }}>/{m.sched}</span></span>
-            <div style={{ display: 'flex', justifyContent: 'center' }}><Sparkline values={m.trend} color={h.color}/></div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 4 }}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: h.color, flexShrink: 0 }}/>
-              <span style={{ fontSize: 11, color: h.color, fontWeight: 500 }}>{h.label}</span>
+          <div key={i} style={{display:'grid',gridTemplateColumns:'1fr 52px 80px 96px',gap:8,alignItems:'center',padding:'6px 0',borderBottom:i<MODULES.length-1?`1px solid ${C.border}`:'none'}}>
+            <span style={{fontSize:12,fontWeight:500,color:C.slate,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}} title={m.name}>{m.name}</span>
+            <span style={{textAlign:'right',fontSize:12}}><b style={{color:C.slate}}>{m.done}</b><span style={{color:C.muted}}>/{m.sched}</span></span>
+            <div style={{display:'flex',justifyContent:'center'}}><Sparkline values={m.trend} color={h.color}/></div>
+            <div style={{display:'flex',justifyContent:'flex-end',alignItems:'center',gap:4}}>
+              <span style={{width:6,height:6,borderRadius:'50%',background:h.color,flexShrink:0}}/>
+              <span style={{fontSize:11,color:h.color,fontWeight:500}}>{h.label}</span>
             </div>
           </div>
         );
       })}
-    </div>
+    </Card>
   );
 }
 
-// ── Root app ───────────────────────────────────────────────────────────────
+// ── App ────────────────────────────────────────────────────────────────────
 function App() {
+  const S = {padding:'0 32px',marginBottom:24};
   return (
-    <div style={{ minHeight: '100vh', background: T.ivory, color: T.slate }}>
-      <div style={{ maxWidth: 1320, margin: '0 auto', paddingBottom: 48 }}>
+    <div style={{minHeight:'100vh',background:C.ivory,color:C.slate}}>
+      <div style={{maxWidth:1320,margin:'0 auto',paddingBottom:48}}>
         <Header/>
-        <div style={{ paddingTop: 24 }}>
-          <div style={{ padding: '0 32px', marginBottom: 24 }}><KPIStrip/></div>
-          <div style={{ padding: '0 32px', marginBottom: 24 }}><DailyFeed/></div>
-          <div style={{ padding: '0 32px', marginBottom: 24 }}><TeamCandidates/></div>
-          <div style={{ padding: '0 32px', marginBottom: 24 }}><InterviewerCapacity/></div>
-          <div style={{ padding: '0 32px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 16 }}>
-              <DeclineOffenders/>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <SharedQueue/>
-                <ModuleActivity/>
+        <div style={{paddingTop:24}}>
+          <div style={S}><KPIStrip/></div>
+          <div style={S}><DailyFeed/></div>
+          <div style={S}><TeamSection/></div>
+          <div style={S}><CapacitySection/></div>
+          <div style={S}>
+            <div style={{display:'grid',gridTemplateColumns:'1.3fr 1fr',gap:16}}>
+              <DeclineSection/>
+              <div style={{display:'flex',flexDirection:'column',gap:14}}>
+                <QueueSection/>
+                <ModuleSection/>
               </div>
             </div>
           </div>
